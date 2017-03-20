@@ -4,7 +4,10 @@
     .module('NarrowItDownApp', [])
     .controller('NarrowItDownController', NarrowItDownController)
     .service('MenuSearchService', MenuSearchService)
-    .directive('foundItems', FoundItemsDirective);
+    .directive('foundItems', FoundItemsDirective)
+    .factory('MenuSearchFactory', MenuSearchFactory)
+    .constant('ApiBasePath', "http://davids-restaurant.herokuapp.com");
+
 
   function FoundItemsDirective() {
     var ddo = {
@@ -30,37 +33,37 @@
 
   NarrowItDownController.$inject = ['MenuSearchService'];
   function NarrowItDownController(MenuSearchService) {
-    var controller = this;
+    var ndController = this;
 
-    controller.searchTerm = "";
+    ndController.searchTerm = "";
 
-    controller.narrowIt = function() {
-      if (controller.searchTerm === "") {
-        controller.items = [];
+    ndController.narrowIt = function() {
+      if (ndController.searchTerm === "") {
+        ndController.items = [];
         return;
       }
-      var promise = MenuSearchService.getMatchedMenuItems(controller.searchTerm);
+      var promise = MenuSearchService.getMatchedMenuItems(ndController.searchTerm);
       promise.then(function(response) {
-        controller.items = response;
+        ndController.items = response;
       })
       .catch(function(error) {
-        console.log("Something went wrong", error);
+        console.log("Error:", error);
       });
     };
 
-    controller.removeItem = function(index) {
-      controller.items.splice(index, 1);
+    ndController.removeItem = function(index) {
+      ndController.items.splice(index, 1);
     };
   }
 
-  MenuSearchService.$inject = ['$http'];
-  function MenuSearchService($http) {
+  MenuSearchService.$inject = ['$http', 'ApiBasePath'];
+  function MenuSearchService($http, ApiBasePath) {
     var service = this;
 
     service.getMatchedMenuItems = function(searchTerm) {
         return $http({
           method: 'GET',
-          url: 'https://davids-restaurant.herokuapp.com/menu_items.json'
+          url: (ApiBasePath + '/menu_items.json')
         }).then(function (result) {
         // process result and only keep items that match
         var items = result.data.menu_items;
@@ -79,73 +82,13 @@
     };
   }
 
-}
-)();
 
+  function MenuSearchFactory() {
+    var factory = function () {
+      return new MenuSearchService();
+    };
 
-//
-// (function () {
-// 'use strict';
-//
-// angular.module('NarrowItDownApp', [])
-// .controller('NarrowItDownController', NarrowItDownController)
-// .constant('ApiBasePath', "http://davids-restaurant.herokuapp.com")
-// .factory('NarrowItDownFactory', NarrowItDownFactory)
-// .service('MenuSearchService', MenuSearchService)
-// .directive('foundItems' FoundItemsDirective);
-//
-//
-// function FoundItemsDirective() {
-//   var ddo = {
-//     templateUrl: 'foundItems.html',
-//     scope: {
-//       found: '<',
-// //      myTitle: '@title',
-//       onRemove: '&'
-//     },
-//     controller: FoundItemsDirectiveController,
-//     controllerAs: 'found',
-//     bindToController: true
-//   };
-//
-//   return ddo;
-// }
-//
-//
-// function FoundItemsDirectiveController() {
-//   var found = this;
-//
-//   found.isEmpty = function() {
-//      return list.found != undefined && list.found.length === 0;
-//    }
-//
-// }
-//
-//
-// NarrowItDownController.$inject = ['MenuSearchService'];
-// function NarrowItDownController(MenuSearchService) {
-//   var ndController = this;
-//
-//   // Use factory to create new narrow it down service
-//   var NarrowItDown = NarrowItDownFactory();
-//
-//   ndController.found = NarrowItDown.getMatchedMenuItems();
-//   ndController.title = "My Awesome App";
-//   lndControllerist.removeItem = function (itemIndex) {
-//     NarrowItDown.removeItem(itemIndex);
-//   };
-//
-// }
-//
-//
-// function MenuSearchService() {
-//   var service = this;
-//
-//   service.removeItem = function (itemIndex) {
-//     items.splice(itemIndex, 1);
-//   };
-//
-// }
-//
-//
-// })();
+    return factory;
+  }
+
+})();
